@@ -1,0 +1,34 @@
+# Aufgaben
+
+- [x] Stimmdle auf 71 Schauspieler mit Solo-Sprechpassagen erweitern
+- [x] Alle neuen Clips auf Einbettbarkeit und tatsächlichen Sprachbeginn prüfen
+- [x] Emoji-Ergebnis zum Teilen als besonderes Extra einbauen
+- [x] Spielablauf im Browser testen und Änderungen sichern
+- [x] Instagram- und TikTok-Tag @henri.mr0 klein im Menü verlinken
+- [x] Duell-Links mit exakt derselben Fünf-Sound-Runde einbauen
+- [x] Duell-Ablauf und Social-Links auf Handy und Desktop prüfen
+- [x] Zurück-zum-Menü-Button in beiden Spielen und auf der Auswertung ergänzen
+- [x] Stimmen nach Bekanntheit sortieren: bekannte Schauspieler in Stufen 1–4, übrige Oscar-Gewinner in Stufe 5
+- [x] Menütext ohne Anzahl und nicht klickbares Feld „Soon: Live-Duelle“ ergänzen
+- [x] Alle neuen Abläufe auf Handy und Desktop prüfen
+- [x] Normales Duell: Punktestand im Link, Vergleich mit Sieger, Rückduell
+- [x] Live-Duelle komplett programmiert, im Menü gesperrt („Soon“)
+- [x] Stimmdle: ein gemeinsamer Pool bekannter Schauspieler für alle Stufen, eigene Zeitschritte ab 0,1 s
+- [ ] Pool von 48 auf ca. 70 bekannte Schauspieler erweitern (Quelle: Interviews, Trailer, Reden)
+- [ ] Mehr Memes
+- [ ] Live-Duelle: Server-Transport anschließen und `LIVE_DUELS_ENABLED` freischalten
+- [x] Memes nach Bekanntheit sortiert: die bekanntesten in Stufe 4 und 5
+- [x] Clip-Prüfer (`public/clip-pruefer.html`) mit Kandidaten für 17 deutsche Schauspieler
+- [x] 13 deutsche Schauspieler geprüft und in `VOICES` übernommen (61 Stimmen)
+- [ ] Til Schweiger, Daniel Brühl, Iris Berben, Diane Kruger: Clip prüfen (`clip-pruefliste-2.md`) und ergänzen
+- [x] Spezielle Memes wieder drin, aber nur in Stufe 2 und 3; Stufe 1 nur breit bekannte
+- [ ] Bekannte neue Memes ergänzen (Clips müssen jemand anhören)
+- [x] Kaputte/gesperrte YouTube-Clips: automatischer Ersatz (normale Runde) bzw. übersprungen (Duell/Live), Fehlerclips werden gemerkt
+- [x] Link-Vorschau mit Bild und Duell-Titel
+- [ ] `SITE_URL` in `src/lib/site.ts` nach dem Veröffentlichen eintragen
+- [x] Statistik auf dem Gerät (Karte am Rundenende, Rekord im Menü)
+- [x] Als App auf den Startbildschirm (Icons, Manifest, Hinweis im Menü)
+- [ ] Nach dem Veröffentlichen: Installation auf iPhone und Android einmal ausprobieren
+- [x] Blitz-Modus (60 s, Serien-Bonus, Rekord, Teilen)
+- [x] Spielgefühl: Konfetti, Vibration, Töne, Animationen, Schalter im Menü
+- [ ] Blitz auf iPhone und Android ausprobieren (Ton startet nach dem Tippen, Vibration nur Android)

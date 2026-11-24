@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>Clip-Prüfer – Hördle</title>
+<style>
+  :root { --bg:#10170f; --card:#18221a; --line:#2c3b2e; --fg:#f0f5e8; --mut:#9fb09a; --pri:#c6f24a; --pri-fg:#16210f; --bad:#ff7a6b; --ok:#7be08a; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  main { max-width:640px; margin:0 auto; padding:16px; }
+  h1 { font-size:1.5rem; margin:0 0 4px; } h1 span { color:var(--pri); }
+  p.lead { color:var(--mut); margin:0 0 16px; font-size:.9rem; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:14px; }
+  label { display:block; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--mut); margin:10px 0 4px; }
+  label:first-child { margin-top:0; }
+  input, select { width:100%; background:#0e150d; color:var(--fg); border:1px solid var(--line); border-radius:10px; padding:10px 12px; font:inherit; }
+  input:focus, select:focus { outline:2px solid var(--pri); outline-offset:1px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; } .row > * { flex:1 1 auto; }
+  button { background:#223024; color:var(--fg); border:1px solid var(--line); border-radius:10px; padding:10px 12px; font:inherit; font-weight:600; cursor:pointer; }
+  button:hover { border-color:var(--pri); } button:disabled { opacity:.4; cursor:not-allowed; }
+  button.pri { background:var(--pri); color:var(--pri-fg); border-color:var(--pri); }
+  .video { aspect-ratio:16/9; background:#000; border-radius:10px; overflow:hidden; } .video iframe, .video > div { width:100%; height:100%; }
+  .pos { font-variant-numeric:tabular-nums; font-size:1.8rem; font-weight:800; color:var(--pri); text-align:center; }
+  .msg { font-size:.85rem; margin-top:8px; min-height:1.2em; } .msg.bad { color:var(--bad); } .msg.ok { color:var(--ok); }
+  pre { background:#0b110a; border:1px solid var(--line); border-radius:10px; padding:10px; overflow:auto; font-size:.8rem; white-space:pre-wrap; word-break:break-all; margin:8px 0 0; }
+  .check { display:flex; gap:10px; align-items:flex-start; font-size:.9rem; margin:8px 0; text-transform:none; letter-spacing:0; color:var(--fg); }
+  .check input { width:auto; margin-top:4px; }
+  small { color:var(--mut); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Clip-<span>Prüfer</span></h1>
+  <p class="lead">Wähle einen Kandidaten, stelle die Sekunde ein, ab der die Person allein und deutlich spricht, höre dir die ersten 16 Sekunden an und kopiere die fertige Zeile für <code>src/lib/voices.ts</code>.</p>
+
+  <section class="card">
+    <label for="cand">Kandidat aus der Liste</label>
+    <select id="cand"></select>
+    <label for="url">… oder eigener YouTube-Link / ID</label>
+    <input id="url" placeholder="https://www.youtube.com/watch?v=…" autocomplete="off" />
+    <label for="name">Name der Person</label>
+    <input id="name" placeholder="z. B. Elyas M'Barek" autocomplete="off" />
+    <label for="aliases">Alternative Schreibweisen (mit Komma)</label>
+    <input id="aliases" placeholder="mbarek, elias mbarek" autocomplete="off" />
+    <div class="row" style="margin-top:12px"><button class="pri" id="load">Video laden</button></div>
+    <div class="msg" id="loadmsg" role="status"></div>
+  </section>
+
+  <section class="card">
+    <div class="video"><div id="player"></div></div>
+    <div class="pos" id="pos" aria-live="off">0.0 s</div>
+    <label for="start">Start-Sekunde</label>
+    <input id="start" type="number" min="0" step="0.1" value="0" inputmode="decimal" />
+    <div class="row" style="margin-top:8px">
+      <button data-d="-5">−5</button><button data-d="-1">−1</button><button data-d="-0.1">−0,1</button>
+      <button data-d="0.1">+0,1</button><button data-d="1">+1</button><button data-d="5">+5</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="pri" id="play">▶ 16 s ab Start</button>
+      <button id="stop">■ Stopp</button>
+      <button id="take">Aktuelle Position als Start</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button id="p1">▶ nur 0,1 s</button><button id="p2">▶ 0,5 s</button><button id="p3">▶ 1 s</button><button id="p4">▶ 2 s</button>
+    </div>
+    <small>Die kurzen Proben zeigen, wie Stufe 5 klingt. Der YouTube-Player stoppt nicht ganz exakt, du hörst etwas mehr.</small>
+  </section>
+
+  <section class="card">
+    <label class="check"><input type="checkbox" id="c1" /> <span>Die Person spricht ab dem Start mindestens 12 Sekunden lang <b>allein</b> (kein Interviewer, keine Musik, kein Applaus)</span></label>
+    <label class="check"><input type="checkbox" id="c2" /> <span>Die Stimme ist von Anfang an zu hören (nicht erst nach einer Pause)</span></label>
+    <button class="pri" id="add" style="width:100%" disabled>Zeile erzeugen</button>
+    <pre id="line" hidden></pre>
+    <div class="row" style="margin-top:8px"><button id="copy" hidden>Zeile kopieren</button></div>
+  </section>
+
+  <section class="card">
+    <label>Gesammelte, geprüfte Zeilen <small>(bleiben in diesem Browser gespeichert)</small></label>
+    <pre id="all">Noch nichts gesammelt.</pre>
+    <div class="row" style="margin-top:8px"><button id="copyall">Alle kopieren</button><button id="clear">Liste leeren</button></div>
+  </section>
+</main>
+
+<script>
+/* Kandidaten aus der Websuche. Titel passen zur Person, Inhalt und Startzeit sind NICHT geprüft. */
+const CANDIDATES = [
+  { name: "Elyas M'Barek", aliases: ["mbarek", "elias mbarek", "elyas mbarek", "elias m'barek", "cem"], ids: ["saqzjNK2Lzc", "yOtqJYeUr5Y"] },
+  { name: "Til Schweiger", aliases: ["schweiger", "til"], ids: ["50V5YKG9FX8", "A-KfWUN7Q7I"] },
+  { name: "Matthias Schweighöfer", aliases: ["schweighöfer", "schweighoefer", "matthias schweighofer"], ids: ["I6fDbBLdWnc", "sDWdfYOcFmE"] },
+  { name: "Christoph Waltz", aliases: ["waltz", "christoph"], ids: ["tHx1edLkXwU", "GUURJjVbIpo"] },
+  { name: "Daniel Brühl", aliases: ["brühl", "bruehl", "daniel bruhl"], ids: ["BzLGCDWbjPY", "B4NZMp11ywc"] },
+  { name: "Moritz Bleibtreu", aliases: ["bleibtreu", "moritz"], ids: ["LkHOpz6Yo1o", "Tjd9F-8Fzos"] },
+  { name: "Florian David Fitz", aliases: ["fitz", "florian fitz"], ids: ["LGLURBZgCaU", "6AzS26XVpP8"] },
+  { name: "Karoline Herfurth", aliases: ["herfurth", "karoline"], ids: ["iUKJr2dajy0", "Zn3G8Im4Ihs"] },
+  { name: "Jella Haase", aliases: ["haase", "jella", "chantal"], ids: ["0cXyNFv5sWE", "eHEO3k3JntY"] },
+  { name: "Iris Berben", aliases: ["berben", "iris"], ids: ["SXTxZt6C9yM", "ZsUsd-g5BmI"] },
+  { name: "Jan Josef Liefers", aliases: ["liefers", "boerne", "börne"], ids: ["zLbpbbVMFVg", "eYXb-aAV-mY"] },
+  { name: "Nora Tschirner", aliases: ["tschirner", "nora"], ids: ["0tfQJuSafaA", "e5p7WEQotCQ"] },
+  { name: "Diane Kruger", aliases: ["kruger", "krüger", "diane krüger"], ids: ["V1Rhwm8vKFo", "ViKTf_YX0vY"] },
+  { name: "Alexandra Maria Lara", aliases: ["lara", "alexandra lara"], ids: ["wmbXUF5aN40", "sb3PAVdNxhI"] },
+  { name: "Bastian Pastewka", aliases: ["pastewka", "bastian"], ids: ["aPej2lS5yhw", "52nrTMBSGOg"] },
+  { name: "Anke Engelke", aliases: ["engelke", "anke"], ids: ["3TVELjt0FRs", "BaoCl-9VGxw"] },
+  { name: "Heike Makatsch", aliases: ["makatsch", "heike"], ids: ["bduFQBR7UE0", "5hGiGm5zA2Q"] },
+];
+
+const $ = (id) => document.getElementById(id);
+const store = { get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+
+let player = null, ready = false, videoId = "", poll = 0, stopTimer = 0, embedOk = null;
+
+/* Kandidatenliste: je Person bis zu zwei Videos */
+const cand = $("cand");
+cand.innerHTML = '<option value="">– auswählen –</option>' + CANDIDATES.flatMap((c, i) => c.ids.map((id, j) =>
+  `<option value="${i}:${j}">${c.name} · Video ${j + 1}</option>`)).join("");
+cand.addEventListener("change", () => {
+  if (!cand.value) return;
+  const [i, j] = cand.value.split(":").map(Number), c = CANDIDATES[i];
+  $("url").value = c.ids[j]; $("name").value = c.name; $("aliases").value = c.aliases.join(", ");
+  load();
+});
+
+const parseId = (raw) => {
+  const t = (raw || "").trim();
+  if (/^[\w-]{11}$/.test(t)) return t;
+  const m = t.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);
+  return m ? m[1] : "";
+};
+const fmt = (n) => (Math.round(n * 10) / 10).toFixed(1);
+const msg = (el, text, cls = "") => { el.textContent = text; el.className = "msg " + cls; };
+
+function setStart(v) { const n = Math.max(0, Math.round(Number(v) * 10) / 10); $("start").value = Number.isFinite(n) ? n : 0; resetLine(); }
+function resetLine() { $("line").hidden = true; $("copy").hidden = true; }
+
+function load() {
+  const id = parseId($("url").value);
+  if (!id) return msg($("loadmsg"), "Das ist kein gültiger YouTube-Link oder keine 11-stellige ID.", "bad");
+  videoId = id; embedOk = null; resetLine();
+  $("c1").checked = $("c2").checked = false; updateAdd();
+  msg($("loadmsg"), "Lade …");
+  if (!ready) return msg($("loadmsg"), "Der YouTube-Player lädt noch, bitte gleich nochmal drücken.", "bad");
+  player.cueVideoById({ videoId: id, startSeconds: Number($("start").value) || 0 });
+}
+
+function stopAll() { clearTimeout(stopTimer); try { player && player.pauseVideo(); } catch {} }
+function playFor(seconds) {
+  if (!ready || !videoId) return msg($("loadmsg"), "Erst ein Video laden.", "bad");
+  stopAll();
+  player.seekTo(Number($("start").value) || 0, true); player.unMute(); player.setVolume(100); player.playVideo();
+  stopTimer = setTimeout(() => { try { player.pauseVideo(); } catch {} }, seconds * 1000);
+}
+
+$("load").addEventListener("click", load);
+$("play").addEventListener("click", () => playFor(16));
+$("p1").addEventListener("click", () => playFor(0.1));
+$("p2").addEventListener("click", () => playFor(0.5));
+$("p3").addEventListener("click", () => playFor(1));
+$("p4").addEventListener("click", () => playFor(2));
+$("stop").addEventListener("click", stopAll);
+$("take").addEventListener("click", () => { if (player && ready) setStart(player.getCurrentTime()); });
+$("start").addEventListener("input", resetLine);
+document.querySelectorAll("[data-d]").forEach((b) => b.addEventListener("click", () => setStart(Number($("start").value) + Number(b.dataset.d))));
+
+const updateAdd = () => { $("add").disabled = !($("c1").checked && $("c2").checked && videoId && $("name").value.trim() && embedOk !== false); };
+["c1", "c2", "name"].forEach((id) => $(id).addEventListener("input", updateAdd));
+
+const esc = (s) => s.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+function makeLine() {
+  const aliases = $("aliases").value.split(",").map((x) => x.trim()).filter(Boolean).map((x) => `"${esc(x)}"`).join(", ");
+  return `    a("${esc($("name").value.trim())}", "${videoId}", ${Number($("start").value) || 0}, [${aliases}]),`;
+}
+$("add").addEventListener("click", () => {
+  const line = makeLine();
+  $("line").textContent = line; $("line").hidden = false; $("copy").hidden = false;
+  const list = store.get("hoerdle-lines", []).filter((l) => !l.includes(`"${videoId}"`));
+  list.push(line); store.set("hoerdle-lines", list); renderAll();
+});
+$("copy").addEventListener("click", () => copy($("line").textContent, $("copy")));
+$("copyall").addEventListener("click", () => copy(store.get("hoerdle-lines", []).join("\n"), $("copyall")));
+$("clear").addEventListener("click", () => { if (confirm("Gesammelte Zeilen wirklich löschen?")) { store.set("hoerdle-lines", []); renderAll(); } });
+function renderAll() { const l = store.get("hoerdle-lines", []); $("all").textContent = l.length ? l.join("\n") : "Noch nichts gesammelt."; }
+async function copy(text, btn) {
+  const old = btn.textContent;
+  try { await navigator.clipboard.writeText(text); btn.textContent = "Kopiert!"; } catch { btn.textContent = "Bitte von Hand markieren"; }
+  setTimeout(() => (btn.textContent = old), 1500);
+}
+renderAll();
+
+/* YouTube-Player */
+window.onYouTubeIframeAPIReady = () => {
+  player = new YT.Player("player", {
+    width: "100%", height: "100%", playerVars: { playsinline: 1, rel: 0 },
+    events: {
+      onReady: () => { ready = true; msg($("loadmsg"), "Player bereit."); poll = setInterval(() => { try { $("pos").textContent = fmt(player.getCurrentTime()) + " s"; } catch {} }, 100); },
+      onError: (e) => {
+        embedOk = false; updateAdd();
+        const why = { 2: "ungültige ID", 5: "Player-Fehler", 100: "Video nicht gefunden oder gelöscht", 101: "Einbettung vom Besitzer gesperrt", 150: "Einbettung vom Besitzer gesperrt" }[e.data] || "Fehler " + e.data;
+        msg($("loadmsg"), "Dieses Video geht nicht: " + why + ". Bitte ein anderes wählen.", "bad");
+      },
+      onStateChange: (e) => { if (e.data === 5 /* cued */ || e.data === 1 /* playing */) { embedOk = true; updateAdd(); msg($("loadmsg"), "Video geladen, Einbettung klappt.", "ok"); } },
+    },
+  });
+};
+const tag = document.createElement("script"); tag.src = "https://www.youtube.com/iframe_api"; document.head.appendChild(tag);
+</script>
+</body>
+</html>
