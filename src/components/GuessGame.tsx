@@ -70,6 +70,9 @@ export function GuessGame({ levels, storageKey, title, placeholder, live, clips 
   const [newRecord, setNewRecord] = useState(false);
   const [shake, setShake] = useState(false);
   const onClipError = useRef<(code: number) => void>(() => {});
+  const onState = useRef<(state: number) => void>(() => {});
+  /** Zeitleiste und Stopp laufen erst, wenn der Ton wirklich läuft (YouTube braucht nach Play einen Moment) */
+  const run_ = useRef({ want: false, counting: false, since: 0, before: 0, len: 0, guard: undefined as number | undefined });
 
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -84,6 +87,7 @@ export function GuessGame({ levels, storageKey, title, placeholder, live, clips 
         events: {
           onReady: () => { if (!dead) { player.current = p; setReady(true); } },
           onError: (e: { data: number }) => { if (!dead) onClipError.current(e.data); },
+          onStateChange: (e: { data: number }) => { if (!dead) onState.current(e.data); },
         },
       });
     };
@@ -101,7 +105,9 @@ export function GuessGame({ levels, storageKey, title, placeholder, live, clips 
   }, []);
 
   const stop = () => {
-    window.clearTimeout(timer.current); cancelAnimationFrame(raf.current!);
+    const r = run_.current;
+    window.clearTimeout(timer.current); window.clearTimeout(r.guard); cancelAnimationFrame(raf.current!);
+    r.want = false; r.counting = false; r.before = 0;
     player.current?.pauseVideo?.(); setPlaying(false);
   };
   useEffect(() => {
@@ -144,13 +150,36 @@ export function GuessGame({ levels, storageKey, title, placeholder, live, clips 
   const play = () => {
     if (!ready) return;
     if (playing) return stop();
-    const p = player.current;
-    p.seekTo(meme.start ?? 0, true); p.unMute(); p.setVolume(100); p.playVideo();
-    setPlaying(true);
-    const t0 = performance.now();
-    const tick = () => { setPos(Math.min((performance.now() - t0) / 1000, maxLen)); raf.current = requestAnimationFrame(tick); };
-    tick();
-    timer.current = window.setTimeout(stop, maxLen * 1000 + 250);
+    const p = player.current; const r = run_.current;
+    const start = meme.start ?? 0;
+    r.want = true; r.counting = false; r.before = 0; r.len = maxLen * 1000;
+    setPos(0); setPlaying(true);
+    // Vorspulen nur, wenn nötig: ein unnötiger Sprung zwingt YouTube zum erneuten Puffern
+    let cur = start; try { cur = p.getCurrentTime?.() ?? start; } catch {}
+    if (Math.abs(cur - start) > 0.3) p.seekTo(start, true);
+    p.unMute(); p.setVolume(100); p.playVideo();
+    // Kommt nach 5 s kein Ton, aufgeben statt ewig zu warten
+    r.guard = window.setTimeout(() => { if (!run_.current.counting) stop(); }, 5000);
+  };
+  const tick = () => {
+    const r = run_.current;
+    if (!r.counting) return;
+    setPos(Math.min((r.before + performance.now() - r.since) / 1000, r.len / 1000));
+    raf.current = requestAnimationFrame(tick);
+  };
+  onState.current = (state) => {
+    const r = run_.current;
+    if (!r.want) return; // Zustände ohne unseren Start (Vorladen, Vorspulen) ignorieren
+    if (state === 1) { // Ton läuft: ab jetzt zählt die Zeit
+      window.clearTimeout(r.guard); window.clearTimeout(timer.current);
+      r.counting = true; r.since = performance.now();
+      timer.current = window.setTimeout(stop, Math.max(0, r.len - r.before));
+      cancelAnimationFrame(raf.current!); tick();
+    } else if (state === 3 && r.counting) { // Puffern mitten im Clip: Zeit anhalten
+      r.before += performance.now() - r.since; r.counting = false;
+      window.clearTimeout(timer.current); cancelAnimationFrame(raf.current!);
+      window.clearTimeout(r.guard); r.guard = window.setTimeout(() => { if (!run_.current.counting) stop(); }, 5000);
+    } else if (state === 0) stop();
   };
   const suggestions = useMemo(() => suggest(input, MEMES), [input, MEMES]);
   /** Genau passende Eingabe (auch Alias) zählt; sonst der oberste Vorschlag */
