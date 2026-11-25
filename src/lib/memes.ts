@@ -3,59 +3,73 @@ export type Meme = { name: string; yt: string; start?: number; aliases?: string[
 /**
  * Memes pro Schwierigkeitsstufe (Index 0 = Stufe 1).
  * Die Schwierigkeit entsteht über die Clip-Länge. Stufe 1 nutzt nur breit bekannte Memes (EASY_POOL),
- * Stufe 2 und 3 zusätzlich speziellere aus der Netzkultur (NICHE), Stufe 4 und 5 die
- * in Deutschland bekanntesten.
+ * Stufe 2 und 3 zusätzlich speziellere aus der Netzkultur (NICHE und NEW), Stufe 4 und 5 die
+ * in Deutschland bekanntesten. Als Antwort gilt der bekannteste Name des Memes, der alte Name bleibt Alias.
+ * Startsekunden (`start`) und Videolängen sind von Hand geprüft.
  */
 const EASY_POOL: Meme[] = [
     { name: "Nicht so tief Rüdiger", yt: "m-5m8wGDcSo", aliases: ["rüdiger", "keine kapriolen"] },
-    { name: "Wolfgang pass auf", yt: "ItqQ2EZziB8", aliases: ["wolfgang", "reifen"] },
+    { name: "Wolfgang pass auf", yt: "ItqQ2EZziB8", start: 6, aliases: ["wolfgang", "reifen"] },
     { name: "Kranplätze müssen verdichtet sein", yt: "Ccll1mKk_3w", aliases: ["kranplätze", "ronny"] },
-    { name: "Big Tasty Kritiker", yt: "dhETW09NFDk", aliases: ["big tasty"] },
-    { name: "Alarm! Alarm!", yt: "xL1_meeP82g", aliases: ["alarm"] },
-    { name: "Ich habe nur ein Bier getrunken", yt: "k29dop29raQ", aliases: ["nur ein bier"] },
-    { name: "Oma will Cola Zerrro", yt: "MSRKOhcxnow", aliases: ["cola zero", "zerrro"] },
+    { name: "Big Tasty Kritiker", yt: "dhETW09NFDk", start: 2, aliases: ["big tasty"] },
+    { name: "Kokosmilch", yt: "MSRKOhcxnow", aliases: ["oma will cola zerrro", "oma will cola zero", "cola zero", "zerrro", "oma"] },
     { name: "Michi bringt das Bier", yt: "52lc3IjWIAs", aliases: ["michi", "ey das ist kaputt"] },
-    { name: "Halt Stop, jetzt rede ich", yt: "39tK5DL1z28", aliases: ["halt stop", "halt stopp", "andreas"] },
     { name: "Was ist denn mit Karsten los", yt: "PeETF41yXbo", aliases: ["karsten"] },
-    { name: "Was ist das für 1 Kombi", yt: "q2yHcQuP2q4", aliases: ["kombi"] },
+    { name: "Was ist das für 1 Kombi", yt: "q2yHcQuP2q4", start: 25, aliases: ["kombi"] },
     { name: "Warum liegt hier überhaupt Stroh", yt: "J2ShLsJYWe8", aliases: ["stroh"] },
     { name: "Europa ist ein Land", yt: "ktFTKVf2OKo", aliases: ["unge", "europa"] },
-    { name: "Hallo Herr Kaiser", yt: "WKskEcGBTKU", aliases: ["herr kaiser"] },
-    { name: "Mega geil", yt: "-IAyb9s6n6k", aliases: ["megageil"] },
     { name: "Migrationshintergrund? Weiße Wand", yt: "l2rMlFXXsvU", aliases: ["migrationshintergrund", "weiße wand"] },
 ];
 const NICHE: Meme[] = [
     { name: "Henri Henrisson", yt: "Yx0Z-mKkIvI", aliases: ["jürgen hurenson", "isländer"] },
     { name: "Dominika – Nicht schnell, langsam", yt: "2uhvWHPmitY", aliases: ["dominika", "nicht schnell", "richard steht hoch"] },
-    { name: "Swear to God", yt: "m0gbLf04dOk", aliases: ["trymacs", "swear to god"] },
-    { name: "Ich hab Polizei", yt: "PNjG22Gbo6U", aliases: ["polizistensohn", "böhmermann"] },
-    { name: "Verpiss dich du Huso", yt: "l9XeZ7_JhR8", aliases: ["montanablack", "monte", "huso"] },
-    { name: "Du hast Madeira-Verbot", yt: "d0wnzgaGqNo", aliases: ["madeira", "madeira verbot", "unge"] },
+    { name: "Sag wallah", yt: "m0gbLf04dOk", aliases: ["swear to god", "trymacs", "wallah"] },
+    { name: "Du hast Madeira-Verbot", yt: "d0wnzgaGqNo", start: 4, aliases: ["madeira", "madeira verbot", "unge"] },
 ];
-const MID_POOL: Meme[] = [...EASY_POOL, ...NICHE];
+/** Weitere bekannte Memes aus der Netzkultur, in Stufe 2 und 3 (und im Blitz-Modus) */
+const NEW: Meme[] = [
+    { name: "Chantal, heul leise", yt: "SxuQprBbzpo", aliases: ["chantal", "heul leise", "fack ju göhte"] },
+    { name: "Bitte helfen Sie mir, ich bin in Gefahr", yt: "6zswl5YrvVw", start: 7, aliases: ["ich bin in gefahr", "bitte helfen sie mir", "helfen sie mir"] },
+    { name: "Ich machen so, Auto machen so", yt: "7eQfJBDiwrA", start: 11, aliases: ["auto machen so", "unfall", "ich machen so", "a20"] },
+    { name: "Zijaretten", yt: "EqekSuj5HCo", start: 14, aliases: ["zigaretten", "walter frosch", "frosch"] },
+    { name: "Einfach Orangensaft", yt: "G4cOjG8O-j0", start: 9, aliases: ["orangensaft", "money boy"] },
+    { name: "Meine Chicken Nuggets verbrennen", yt: "EQawYBnMORw", start: 6, aliases: ["chicken nuggets", "nuggets", "nooreax"] },
+    { name: "Forza ist fertig runtergeladen", yt: "lv-mD3qtalw", start: 10, aliases: ["forza", "fertig runtergeladen", "drachenlord forza"] },
+    { name: "Frohes Schaffen", yt: "bZ-cuF30rQ8", aliases: ["schönen abend noch", "drehscheibe"] },
+    { name: "Beste deutsche Mountainbikerin", yt: "TbQogqoOr0E", start: 4, aliases: ["mountainbikerin", "regina stiefl", "regina stiefel"] },
+    { name: "Die haben mich von meinem 12-jährigen Sohn entfernt", yt: "4rKcjRjoWZk", aliases: ["12 jährigen sohn", "zwölfjährigen sohn", "sohn entfernt", "sohn"] },
+];
+/** Zwei Memes aus demselben Zusammenschnitt-Video: je eines in Stufe 2 und in Stufe 3, damit die Video-ID pro Stufe eindeutig bleibt */
+const ERSTER_GETOETET: Meme = { name: "Natürlich werde ich als erster getötet", yt: "VdUlXIi8VhA", start: 163, aliases: ["als erster getötet", "erster getötet"] };
+const NEUE_TASSE: Meme = { name: "Ich hab 'ne neue Tasse", yt: "VdUlXIi8VhA", start: 201, aliases: ["neue tasse", "tasse"] };
+/** Kurze Videos (je etwa 8 Sekunden): nur in den Stufen mit der kürzesten Gesamtlänge */
+const SHORT_VIDEOS: Meme[] = [
+    { name: "Ich habe nur ein Bier getrunken", yt: "k29dop29raQ", aliases: ["nur ein bier", "1 bier"] },
+    { name: "Halt Stop, jetzt rede ich", yt: "39tK5DL1z28", aliases: ["halt stop", "halt stopp", "andreas"] },
+];
 
 export const LEVELS: Meme[][] = [
   EASY_POOL,
-  MID_POOL,
-  MID_POOL,
+  [...EASY_POOL, ...NICHE, ...NEW, ERSTER_GETOETET],
+  [...EASY_POOL, ...NICHE, ...NEW, NEUE_TASSE],
   [
     { name: "Marcell D'Avis 1&1", yt: "7dOIJbnPoXo", aliases: ["marcel davis", "marcell davis", "1und1"] },
     { name: "Habicht hat zwei H", yt: "2wiFX31VCQs", aliases: ["habicht", "9live"] },
     { name: "Layla", yt: "laru0QoJUmI", aliases: ["dj robin", "schürze"] },
-    { name: "Werner – Jaja heißt leck mich", yt: "rt0qE6wAk50", aliases: ["werner", "jaja"] },
     { name: "Ich muss raus", yt: "GIoeXtH4keg", aliases: ["bus kid"] },
     { name: "Sie haben mich ins Gesicht gefilmt", yt: "3O-RygMZ88c", aliases: ["hutbürger", "ins gesicht gefilmt"] },
-    { name: "Meddl Loide", yt: "jSAv6EmYIOI", aliases: ["drachenlord", "meddl"] },
+    ...SHORT_VIDEOS,
   ],
   [
     { name: "Rickroll", yt: "dQw4w9WgXcQ", aliases: ["never gonna give you up"] },
     { name: "Was guckst du?", yt: "uZox54DnTAw", aliases: ["was guckst du", "kaya yanar"] },
-    { name: "Flasche leer – Ich habe fertig", yt: "ub1zsUD7UNQ", aliases: ["trapattoni", "flasche leer", "ich habe fertig"] },
-    { name: "Das Internet ist für uns alle Neuland", yt: "s_L18bOgnIE", aliases: ["neuland", "merkel"] },
-    { name: "Stromberg – Das Leben ist kein Ponyhof", yt: "BMsm8_YOn1o", aliases: ["stromberg", "ponyhof"] },
+    { name: "Flasche leer – Ich habe fertig", yt: "ub1zsUD7UNQ", start: 81, aliases: ["trapattoni", "flasche leer", "ich habe fertig"] },
+    { name: "Das Internet ist für uns alle Neuland", yt: "D-EUytbzO5Y", aliases: ["neuland", "merkel"] },
+    { name: "Stromberg – Das Leben ist kein Ponyhof", yt: "BMsm8_YOn1o", start: 24, aliases: ["stromberg", "ponyhof"] },
     { name: "Nein! Doch! Oh!", yt: "w4aLThuU008", aliases: ["nein doch oh", "louis de funes"] },
-    { name: "Was machen Sachen", yt: "afhOpXMllH0", aliases: ["tv total"] },
-    { name: "Wer ist Shakespeare?", yt: "ByFe08jg8eE", aliases: ["zlatko", "shakespeare", "big brother"] },
+    { name: "Was machen Sachen", yt: "afhOpXMllH0", start: 1, aliases: ["tv total"] },
+    { name: "Timghio ist vierter", yt: "VdUlXIi8VhA", start: 4, aliases: ["timghio", "tim ghio"] },
+    ...SHORT_VIDEOS,
   ],
 ];
 export const MEMES: Meme[] = uniqueMemes(LEVELS);
@@ -130,7 +144,8 @@ export function pickRun(levels: Meme[][] = LEVELS, key = "memedle-seen"): Meme[]
 
 /** Alle Einträge einer Stufenliste ohne Doppelte (für Vorschläge, wenn Stufen sich einen Pool teilen) */
 export function uniqueMemes(levels: Meme[][]): Meme[] {
-  return [...new Map(levels.flat().map((m) => [m.yt, m])).values()];
+  // Schlüssel: Video und Startsekunde, denn ein Zusammenschnitt-Video kann mehrere Memes enthalten
+  return [...new Map(levels.flat().map((m) => [`${m.yt}@${m.start ?? 0}`, m])).values()];
 }
 
 /** Vergleichsform: Kleinschreibung, ohne Akzente/Umlaut-Punkte und Satzzeichen */
