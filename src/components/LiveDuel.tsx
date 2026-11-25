@@ -18,7 +18,7 @@ import {
   type LiveState,
   type LiveTransport,
 } from "@/lib/live-duel";
-import { LEVELS, pickRun, type Meme } from "@/lib/memes";
+import { LEVELS, memeId, pickRun, type Meme } from "@/lib/memes";
 import { VOICE_CLIPS, VOICE_LEVELS } from "@/lib/voices";
 
 const GAMES: Record<LiveGame, { title: [string, string]; label: string; emoji: string; levels: Meme[][]; storageKey: string; placeholder: string; clips?: number[][] }> = {
@@ -122,7 +122,7 @@ export function LiveDuel() {
   const start = () => {
     if (playerCount < 2) return setError("Wartet auf mindestens eine weitere Person.");
     const g = GAMES[game];
-    send({ type: "start", id: me.current, game, ids: pickRun(g.levels, g.storageKey).map((m) => m.yt) });
+    send({ type: "start", id: me.current, game, ids: pickRun(g.levels, g.storageKey).map(memeId) });
   };
 
   const back = (

@@ -5,6 +5,8 @@ import {
   blitzBest, type BlitzGameKey, type BlitzRecord,
 } from "@/lib/blitz";
 import { feedback } from "@/lib/fx";
+import { themeStyle } from "@/lib/game-theme";
+import { recordPlay } from "@/lib/streak";
 import { LEVELS, isCorrect, markBroken, readBroken, suggest, uniqueMemes, type Meme } from "@/lib/memes";
 import { VOICES } from "@/lib/voices";
 
@@ -140,6 +142,7 @@ export function BlitzGame({ game, onBack }: { game: BlitzGameKey; onBack: () => 
     const previous = loadBlitz(game);
     const updated = [...previous, { t: Date.now(), score: s, correct: c, bestCombo: b }];
     saveBlitz(game, updated);
+    recordPlay();
     setRounds(updated);
     const record = isNewBlitzRecord(previous, s);
     setNewRecord(record);
@@ -217,7 +220,7 @@ export function BlitzGame({ game, onBack }: { game: BlitzGameKey; onBack: () => 
   return (
     <>
       <div ref={box} className="pointer-events-none fixed -left-10 top-0 h-px w-px opacity-0" />
-      <main className="mx-auto flex min-h-screen max-w-md flex-col px-4 pb-10 pt-6">
+      <main style={themeStyle("blitz")} className="mx-auto flex min-h-screen max-w-md flex-col px-4 pb-10 pt-6">
         {phase !== "playing" && back}
         <header className="mb-4 flex items-center justify-between border-b border-border pb-4">
           <h1 className="text-3xl font-extrabold tracking-tight">⚡ <span className="text-primary">Blitz</span></h1>

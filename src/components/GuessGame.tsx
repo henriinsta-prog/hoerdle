@@ -5,6 +5,8 @@ import { LEVEL_CLIPS, LEVEL_NAMES, isCorrect, pickRun, points, rank, suggest, un
 import { resultGrid } from "@/lib/result-share";
 import { feedback } from "@/lib/fx";
 import { StatsCard } from "@/components/StatsCard";
+import { themeForStorageKey, themeStyle } from "@/lib/game-theme";
+import { recordPlay } from "@/lib/streak";
 import { addRound, isNewRecord, loadRounds, saveRounds, statsKey, type RoundRecord } from "@/lib/stats";
 import { challengeFromSearch, challengerFromSearch, cleanName, createChallengeUrl, duelOutcome, type ChallengerInfo } from "@/lib/challenge";
 
@@ -206,6 +208,7 @@ export function GuessGame({ levels, storageKey, title, placeholder, live, clips 
       const previous = loadRounds(key);
       const updated = addRound(previous, { t: Date.now(), score: total, attempts: all.map((x) => (x.won ? x.attempts : null)) });
       saveRounds(key, updated);
+      recordPlay();
       setStatsRounds(updated);
       const record = isNewRecord(previous, total);
       setNewRecord(record);
@@ -242,7 +245,7 @@ export function GuessGame({ levels, storageKey, title, placeholder, live, clips 
     };
     return (
       <>{<div ref={box} className="pointer-events-none fixed -left-10 top-0 h-px w-px opacity-0" />}
-      <main className="mx-auto flex min-h-screen max-w-md flex-col px-4 pb-10 pt-6">
+      <main style={themeStyle(themeForStorageKey(storageKey))} className="mx-auto flex min-h-screen max-w-md flex-col px-4 pb-10 pt-6">
         {backButton}
         <h1 className="text-3xl font-extrabold tracking-tight"><Link to="/">{title[0]}<span className="text-primary">{title[1]}</span></Link></h1>
         <div className="mt-6 rounded-2xl bg-card p-5 text-center">
@@ -309,7 +312,7 @@ export function GuessGame({ levels, storageKey, title, placeholder, live, clips 
 
   return (
     <>{<div ref={box} className="pointer-events-none fixed -left-10 top-0 h-px w-px opacity-0" />}
-    <main className="mx-auto flex min-h-screen max-w-md flex-col px-4 pb-10 pt-6">
+    <main style={themeStyle(themeForStorageKey(storageKey))} className="mx-auto flex min-h-screen max-w-md flex-col px-4 pb-10 pt-6">
       {backButton}
       <header className="mb-5 flex items-center justify-between border-b border-border pb-4">
         <h1 className="text-3xl font-extrabold tracking-tight"><Link to="/">{title[0]}<span className="text-primary">{title[1]}</span></Link></h1>
