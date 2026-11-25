@@ -1,4 +1,4 @@
-import type { Meme } from "./memes";
+import { memeId, type Meme } from "./memes";
 
 /** Blitz-Modus: 60 Sekunden, so viele Clips wie möglich. Treffer in Folge bringen Bonuspunkte, machen aber den Ausschnitt kürzer. */
 
@@ -27,11 +27,11 @@ export const pointsFor = (combo: number) => 100 + 50 * Math.min(Math.max(0, comb
 export function drawNext(pool: Meme[], used: ReadonlySet<string>, broken: readonly string[] = [], random: () => number = Math.random): { meme: Meme; used: Set<string> } {
   const usable = pool.filter((m) => !broken.includes(m.yt));
   const base = usable.length ? usable : pool;
-  let options = base.filter((m) => !used.has(m.yt));
+  let options = base.filter((m) => !used.has(memeId(m)));
   let nextUsed = new Set(used);
   if (!options.length) { options = base; nextUsed = new Set(); }
   const meme = options[Math.floor(random() * options.length)]!;
-  nextUsed.add(meme.yt);
+  nextUsed.add(memeId(meme));
   return { meme, used: nextUsed };
 }
 

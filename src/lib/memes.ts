@@ -38,12 +38,25 @@ const NEW: Meme[] = [
     { name: "Frohes Schaffen", yt: "bZ-cuF30rQ8", aliases: ["schönen abend noch", "drehscheibe"] },
     { name: "Beste deutsche Mountainbikerin", yt: "TbQogqoOr0E", start: 4, aliases: ["mountainbikerin", "regina stiefl", "regina stiefel"] },
     { name: "Die haben mich von meinem 12-jährigen Sohn entfernt", yt: "4rKcjRjoWZk", aliases: ["12 jährigen sohn", "zwölfjährigen sohn", "sohn entfernt", "sohn"] },
+    // Aus einem Zusammenschnitt-Video (Startsekunden von Hand geprüft)
+    { name: "Woran hat's gelegen", yt: "9NyJTkuc4zg", start: 20, aliases: ["woran hat es gelegen", "woran hats gelegen", "woran hat et gelegen"] },
+    { name: "Bonbon", yt: "9NyJTkuc4zg", start: 135, aliases: ["bonbons"] },
+    { name: "PC Crashout", yt: "9NyJTkuc4zg", start: 185, aliases: ["pc crash out", "crashout", "pc crash"] },
+    { name: "Ultimativer Trick", yt: "9NyJTkuc4zg", start: 207, aliases: ["trick"] },
+    { name: "Konnichiwa", yt: "9NyJTkuc4zg", start: 242, aliases: ["konichiwa", "konnichiva"] },
+    { name: "Mach das alles sofort aus", yt: "9NyJTkuc4zg", start: 272, aliases: ["mach das aus", "sofort aus", "mach alles aus"] },
+    { name: "Schalke Platzierung", yt: "9NyJTkuc4zg", start: 345, aliases: ["schalke", "schalke plazierung", "tabellenplatz"] },
+    { name: "Onkelfickerberg", yt: "eddKYpK83m4", aliases: [] },
 ];
-/** Zwei Memes aus demselben Zusammenschnitt-Video: je eines in Stufe 2 und in Stufe 3, damit die Video-ID pro Stufe eindeutig bleibt */
+/** Zwei weitere Memes aus einem anderen Zusammenschnitt-Video (je eines in Stufe 2 und 3) */
 const ERSTER_GETOETET: Meme = { name: "Natürlich werde ich als erster getötet", yt: "VdUlXIi8VhA", start: 163, aliases: ["als erster getötet", "erster getötet"] };
 const NEUE_TASSE: Meme = { name: "Ich hab 'ne neue Tasse", yt: "VdUlXIi8VhA", start: 201, aliases: ["neue tasse", "tasse"] };
-/** Kurze Videos (je etwa 8 Sekunden): nur in den Stufen mit der kürzesten Gesamtlänge */
+/** Kurze Clips (je etwa 6 bis 9 Sekunden): nur in den Stufen mit der kürzesten Gesamtlänge */
 const SHORT_VIDEOS: Meme[] = [
+    { name: "Ich bin der Uwe, und ich bin auch dabei", yt: "9NyJTkuc4zg", start: 169, aliases: ["uwe", "ich bin der uwe", "auch dabei", "uwe ist auch dabei"] },
+    { name: "Cabonat Erol", yt: "9NyJTkuc4zg", start: 200, aliases: ["cabonat", "erol", "carbonat erol"] },
+    { name: "Pizza Peperoni", yt: "9NyJTkuc4zg", start: 433, aliases: ["peperoni", "pizza"] },
+    { name: "Tut ein bisschen weh, machen lieber nicht wieder", yt: "9NyJTkuc4zg", start: 456, aliases: ["tut ein bisschen weh", "machen lieber nicht wieder", "tut ein bisschen weh machen lieber nicht"] },
     { name: "Ich habe nur ein Bier getrunken", yt: "k29dop29raQ", aliases: ["nur ein bier", "1 bier"] },
     { name: "Halt Stop, jetzt rede ich", yt: "39tK5DL1z28", aliases: ["halt stop", "halt stopp", "andreas"] },
 ];
@@ -114,9 +127,9 @@ export function markBroken(id: string) {
 
 /** Ersatz für einen nicht abspielbaren Clip: ein anderes Meme der Stufe, das noch nicht in der Runde ist */
 export function replacementFor(pool: Meme[], run: Meme[], broken: string[], random: () => number = Math.random): Meme | null {
-  const inRun = new Set(run.map((m) => m.yt));
+  const inRun = new Set(run.map(memeId));
   const bad = new Set(broken);
-  const options = pool.filter((m) => !inRun.has(m.yt) && !bad.has(m.yt));
+  const options = pool.filter((m) => !inRun.has(memeId(m)) && !bad.has(m.yt));
   return options.length ? options[Math.floor(random() * options.length)]! : null;
 }
 
@@ -128,18 +141,26 @@ export function pickRun(levels: Meme[][] = LEVELS, key = "memedle-seen"): Meme[]
   const chosen = new Set<string>();
   const run = levels.map((all) => {
     const l = all.filter((m) => !broken.includes(m.yt)).length >= 1 ? all.filter((m) => !broken.includes(m.yt)) : all;
-    let pool = l.filter((m) => !seen.includes(m.yt) && !chosen.has(m.yt));
+    let pool = l.filter((m) => !seen.includes(memeId(m)) && !chosen.has(memeId(m)));
     if (!pool.length) {
-      seen = seen.filter((id) => !l.some((m) => m.yt === id));
-      pool = l.filter((m) => !chosen.has(m.yt));
+      seen = seen.filter((id) => !l.some((m) => memeId(m) === id));
+      pool = l.filter((m) => !chosen.has(memeId(m)));
     }
     if (!pool.length) pool = l;
     const pick = pool[Math.floor(Math.random() * pool.length)]!;
-    chosen.add(pick.yt);
+    chosen.add(memeId(pick));
     return pick;
   });
-  try { localStorage.setItem(key, JSON.stringify([...seen, ...run.map((m) => m.yt)])); } catch {}
+  try { localStorage.setItem(key, JSON.stringify([...seen, ...run.map(memeId)])); } catch {}
   return run;
+}
+
+/** Eindeutige Kennung eines Memes: Video-ID, bei Startsekunde zusätzlich diese (ein Video kann mehrere Memes enthalten). */
+export const memeId = (m: Meme) => (m.start ? `${m.yt}@${m.start}` : m.yt);
+
+/** Findet ein Meme anhand seiner Kennung. Alte Duell-Links mit reiner Video-ID funktionieren weiter. */
+export function findById(pool: Meme[] | undefined, id: string): Meme | undefined {
+  return pool?.find((m) => memeId(m) === id) ?? pool?.find((m) => m.yt === id);
 }
 
 /** Alle Einträge einer Stufenliste ohne Doppelte (für Vorschläge, wenn Stufen sich einen Pool teilen) */

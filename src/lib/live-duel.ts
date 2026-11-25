@@ -1,5 +1,5 @@
 import { cleanName } from "./challenge";
-import type { Meme } from "./memes";
+import { findById, type Meme } from "./memes";
 
 /**
  * Live-Duelle: mehrere Spieler spielen gleichzeitig dieselben fünf Clips,
@@ -161,6 +161,6 @@ export function createLocalTransport(code: string): LiveTransport {
 /** Wandelt die Clip-IDs einer Start-Nachricht zurück in die Runde; null bei ungültigen IDs. */
 export function runFromIds(levels: Meme[][], ids: string[]): Meme[] | null {
   if (ids.length !== levels.length) return null;
-  const run = ids.map((id, i) => levels[i]?.find((m) => m.yt === id));
+  const run = ids.map((id, i) => findById(levels[i], id));
   return run.every((m): m is Meme => Boolean(m)) ? run : null;
 }

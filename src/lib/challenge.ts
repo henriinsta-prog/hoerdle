@@ -1,4 +1,4 @@
-import type { Meme } from "./memes";
+import { findById, memeId, type Meme } from "./memes";
 
 /** Höchstpunktzahl einer Runde: Stufe n bringt maximal n × 100 Punkte (1–5 → 1500). */
 export const MAX_SCORE = 1500;
@@ -10,7 +10,7 @@ export function challengeFromSearch(levels: Meme[][], search: string): Meme[] | 
   const ids = new URLSearchParams(search).get("duell")?.split(",");
   if (!ids || ids.length !== levels.length) return null;
 
-  const run = ids.map((id, index) => levels[index]?.find((meme) => meme.yt === id));
+  const run = ids.map((id, index) => findById(levels[index], id));
   return run.every((meme): meme is Meme => Boolean(meme)) ? run : null;
 }
 
@@ -31,7 +31,7 @@ export function challengerFromSearch(search: string): ChallengerInfo | null {
 }
 
 export function createChallengeUrl(origin: string, pathname: string, run: Meme[], challenger?: ChallengerInfo) {
-  let url = `${origin}${pathname}?duell=${run.map((meme) => meme.yt).join(",")}`;
+  let url = `${origin}${pathname}?duell=${run.map(memeId).join(",")}`;
   if (challenger) {
     url += `&p=${Math.max(0, Math.min(MAX_SCORE, Math.round(challenger.score)))}`;
     const name = cleanName(challenger.name);
