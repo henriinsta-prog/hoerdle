@@ -82,6 +82,10 @@ function Menu() {
           <span aria-hidden="true">·</span>
           <a href="https://www.tiktok.com/@henri.mr0" target="_blank" rel="noreferrer" className="underline-offset-4 transition hover:text-primary hover:underline">TikTok</a>
         </div>
+        <p className="mt-3 text-[11px] opacity-80">
+          Meme-Vorschläge? Schreib mir auf{" "}
+          <a href="https://www.instagram.com/henri.mr0" target="_blank" rel="noreferrer" className="underline underline-offset-4 transition hover:text-primary">Instagram</a>.
+        </p>
       </footer>
     </main>
   );
