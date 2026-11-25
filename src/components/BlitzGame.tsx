@@ -41,6 +41,7 @@ export function BlitzGame({ game, onBack }: { game: BlitzGameKey; onBack: () => 
   const player = useRef<any>(null);
   const box = useRef<HTMLDivElement>(null);
   const stopTimer = useRef<number | undefined>(undefined);
+  const pendingLen = useRef(0);
   const tick = useRef<number | undefined>(undefined);
   const flashTimer = useRef<number | undefined>(undefined);
   const onClipError = useRef<(code: number) => void>(() => {});
@@ -60,6 +61,13 @@ export function BlitzGame({ game, onBack }: { game: BlitzGameKey; onBack: () => 
         events: {
           onReady: () => { if (!dead) { player.current = p; setReady(true); } },
           onError: (e: { data: number }) => { if (!dead) onClipError.current(e.data); },
+          // Die Stoppuhr startet erst, wenn der Ton wirklich läuft (YouTube braucht nach dem Start einen Moment)
+          onStateChange: (e: { data: number }) => {
+            if (dead || e.data !== 1 || pendingLen.current <= 0) return;
+            window.clearTimeout(stopTimer.current);
+            const ms = pendingLen.current; pendingLen.current = 0;
+            stopTimer.current = window.setTimeout(() => p?.pauseVideo?.(), ms);
+          },
         },
       });
     };
@@ -94,10 +102,9 @@ export function BlitzGame({ game, onBack }: { game: BlitzGameKey; onBack: () => 
     const p = player.current;
     if (!p) return;
     window.clearTimeout(stopTimer.current);
-    const len = clipSeconds(curve, g.current.combo);
+    pendingLen.current = clipSeconds(curve, g.current.combo) * 1000;
     p.loadVideoById({ videoId: m.yt, startSeconds: m.start ?? 0 });
     p.unMute?.(); p.setVolume?.(100);
-    stopTimer.current = window.setTimeout(() => p.pauseVideo?.(), len * 1000 + 250);
   };
 
   const nextClip = () => {
@@ -111,9 +118,8 @@ export function BlitzGame({ game, onBack }: { game: BlitzGameKey; onBack: () => 
     const p = player.current;
     if (!p || g.current.phase !== "playing") return;
     window.clearTimeout(stopTimer.current);
-    const len = clipSeconds(curve, g.current.combo);
+    pendingLen.current = clipSeconds(curve, g.current.combo) * 1000;
     p.seekTo(g.current.meme.start ?? 0, true); p.unMute?.(); p.setVolume?.(100); p.playVideo();
-    stopTimer.current = window.setTimeout(() => p.pauseVideo?.(), len * 1000 + 250);
   };
 
   onClipError.current = (code) => {
