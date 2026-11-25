@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>Meme-Prüfer – Hördle</title>
+<style>
+  :root { --bg:#10170f; --card:#18221a; --line:#2c3b2e; --fg:#f0f5e8; --mut:#9fb09a; --pri:#c6f24a; --pri-fg:#16210f; --bad:#ff7a6b; --ok:#7be08a; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  main { max-width:640px; margin:0 auto; padding:16px; }
+  h1 { font-size:1.5rem; margin:0 0 4px; } h1 span { color:var(--pri); }
+  p.lead { color:var(--mut); margin:0 0 16px; font-size:.9rem; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:14px; }
+  label { display:block; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--mut); margin:10px 0 4px; }
+  select, input { width:100%; background:#0e150d; color:var(--fg); border:1px solid var(--line); border-radius:10px; padding:10px 12px; font:inherit; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; } .row > * { flex:1 1 auto; }
+  button { background:#223024; color:var(--fg); border:1px solid var(--line); border-radius:10px; padding:12px; font:inherit; font-weight:600; cursor:pointer; }
+  button:hover { border-color:var(--pri); } button:disabled { opacity:.4; }
+  button.pri { background:var(--pri); color:var(--pri-fg); border-color:var(--pri); }
+  .video { position:fixed; left:-10px; top:0; width:1px; height:1px; overflow:hidden; opacity:0; pointer-events:none; }
+  .big { font-variant-numeric:tabular-nums; font-size:2rem; font-weight:800; color:var(--pri); text-align:center; }
+  .bar { height:10px; background:#0e150d; border-radius:6px; overflow:hidden; border:1px solid var(--line); margin-top:6px; }
+  .bar i { display:block; height:100%; width:0; background:var(--pri); }
+  .msg { font-size:.85rem; margin-top:8px; color:var(--mut); } .hint { color:var(--ok); }
+  pre { background:#0b110a; border:1px solid var(--line); border-radius:10px; padding:10px; overflow:auto; font-size:.8rem; white-space:pre-wrap; margin:8px 0 0; }
+  small { color:var(--mut); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Meme-<span>Prüfer</span></h1>
+  <p class="lead">So hörst du genau den Ausschnitt, den das Spiel abspielt. Wähle ein Meme, drück <b>Anhören</b> und stell die Startsekunde so ein, dass der wichtige Teil <b>innerhalb der angezeigten Zeit</b> kommt und nicht mit Stille oder Vorgeplänkel beginnt. Am Ende kopierst du die Liste und schickst sie mir.</p>
+
+  <section class="card">
+    <label for="sel">Meme</label>
+    <select id="sel"></select>
+    <p class="msg" id="info"></p>
+    <label>Startsekunde</label>
+    <div class="big" id="startShow">0.0 s</div>
+    <div class="row">
+      <button data-d="-5">−5</button><button data-d="-1">−1</button><button data-d="-0.5">−0,5</button><button data-d="-0.1">−0,1</button>
+      <button data-d="0.1">+0,1</button><button data-d="0.5">+0,5</button><button data-d="1">+1</button><button data-d="5">+5</button>
+    </div>
+    <div class="row"><input id="startIn" type="number" step="0.1" min="0" inputmode="decimal" aria-label="Startsekunde" /></div>
+  </section>
+
+  <section class="card">
+    <label for="len">Wie viele Sekunden anhören?</label>
+    <select id="len"></select>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="row">
+      <button class="pri" id="play">▶ Anhören</button>
+      <button id="stop">■ Stopp</button>
+    </div>
+    <div class="row">
+      <button id="freeplay">Ab hier frei abspielen</button>
+      <button id="mark">⚑ Jetzt ist der Start</button>
+    </div>
+    <p class="msg" id="msg">Tipp: „Ab hier frei abspielen“ spielt weiter, bis du stoppst. Drück bei der Stelle, wo das Meme wirklich anfängt, auf „Jetzt ist der Start“.</p>
+  </section>
+
+  <section class="card">
+    <label>Deine Änderungen</label>
+    <pre id="out">Noch nichts geändert.</pre>
+    <div class="row"><button id="copy">Liste kopieren</button><button id="reset">Alles zurücksetzen</button></div>
+    <p class="msg"><small>Deine Eingaben bleiben in diesem Browser gespeichert. Schick mir die kopierte Liste, ich trage sie ein.</small></p>
+  </section>
+  <div class="video"><div id="yt"></div></div>
+</main>
+<script>
+const MEMES = [{"name": "Nicht so tief Rüdiger", "yt": "m-5m8wGDcSo", "start": 0, "levels": [1, 2, 3], "limit": 12}, {"name": "Wolfgang pass auf", "yt": "ItqQ2EZziB8", "start": 0, "levels": [1, 2, 3], "limit": 12}, {"name": "Kranplätze müssen verdichtet sein", "yt": "Ccll1mKk_3w", "start": 0, "levels": [1, 2, 3], "limit": 12}, {"name": "Big Tasty Kritiker", "yt": "dhETW09NFDk", "start": 0, "levels": [1, 2, 3], "limit": 12}, {"name": "Alarm! Alarm!", "yt": "xL1_meeP82g", "start": 0, "levels": [1, 2, 3], "limit": 12}, {"name": "Ich habe nur ein Bier getrunken", "yt": "k29dop29raQ", "start": 0, "levels": [1, 2, 3], "limit": 12}, {"name": "Oma will Cola Zerrro", "yt": "MSRKOhcxnow", "start": 0, "levels": [1, 2, 3], "limit": 12}, {"name": "Michi bringt das Bier", "yt": "52lc3IjWIAs", "start": 0, "levels": [1, 2, 3], "limit": 12}, {"name": "Halt Stop, jetzt rede ich", "yt": "39tK5DL1z28", "start": 0, "levels": [1, 2, 3], "limit": 12}, {"name": "Was ist denn mit Karsten los", "yt": "PeETF41yXbo", "start": 0, "levels": [1, 2, 3], "limit": 12}, {"name": "Was ist das für 1 Kombi", "yt": "q2yHcQuP2q4", "start": 0, "levels": [1, 2, 3], "limit": 12}, {"name": "Warum liegt hier überhaupt Stroh", "yt": "J2ShLsJYWe8", "start": 0, "levels": [1, 2, 3], "limit": 12}, {"name": "Europa ist ein Land", "yt": "ktFTKVf2OKo", "start": 0, "levels": [1, 2, 3], "limit": 12}, {"name": "Hallo Herr Kaiser", "yt": "WKskEcGBTKU", "start": 0, "levels": [1, 2, 3], "limit": 12}, {"name": "Mega geil", "yt": "-IAyb9s6n6k", "start": 0, "levels": [1, 2, 3], "limit": 12}, {"name": "Migrationshintergrund? Weiße Wand", "yt": "l2rMlFXXsvU", "start": 0, "levels": [1, 2, 3], "limit": 12}, {"name": "Henri Henrisson", "yt": "Yx0Z-mKkIvI", "start": 0, "levels": [2, 3], "limit": 12}, {"name": "Dominika – Nicht schnell, langsam", "yt": "2uhvWHPmitY", "start": 0, "levels": [2, 3], "limit": 12}, {"name": "Swear to God", "yt": "m0gbLf04dOk", "start": 0, "levels": [2, 3], "limit": 12}, {"name": "Ich hab Polizei", "yt": "PNjG22Gbo6U", "start": 0, "levels": [2, 3], "limit": 12}, {"name": "Verpiss dich du Huso", "yt": "l9XeZ7_JhR8", "start": 0, "levels": [2, 3], "limit": 12}, {"name": "Du hast Madeira-Verbot", "yt": "d0wnzgaGqNo", "start": 0, "levels": [2, 3], "limit": 12}, {"name": "Marcell D'Avis 1&1", "yt": "7dOIJbnPoXo", "start": 0, "levels": [4], "limit": 9}, {"name": "Habicht hat zwei H", "yt": "2wiFX31VCQs", "start": 0, "levels": [4], "limit": 9}, {"name": "Layla", "yt": "laru0QoJUmI", "start": 0, "levels": [4], "limit": 9}, {"name": "Werner – Jaja heißt leck mich", "yt": "rt0qE6wAk50", "start": 0, "levels": [4], "limit": 9}, {"name": "Ich muss raus", "yt": "GIoeXtH4keg", "start": 0, "levels": [4], "limit": 9}, {"name": "Sie haben mich ins Gesicht gefilmt", "yt": "3O-RygMZ88c", "start": 0, "levels": [4], "limit": 9}, {"name": "Meddl Loide", "yt": "jSAv6EmYIOI", "start": 0, "levels": [4], "limit": 9}, {"name": "Rickroll", "yt": "dQw4w9WgXcQ", "start": 0, "levels": [5], "limit": 5}, {"name": "Was guckst du?", "yt": "uZox54DnTAw", "start": 0, "levels": [5], "limit": 5}, {"name": "Flasche leer – Ich habe fertig", "yt": "ub1zsUD7UNQ", "start": 0, "levels": [5], "limit": 5}, {"name": "Das Internet ist für uns alle Neuland", "yt": "s_L18bOgnIE", "start": 0, "levels": [5], "limit": 5}, {"name": "Stromberg – Das Leben ist kein Ponyhof", "yt": "BMsm8_YOn1o", "start": 0, "levels": [5], "limit": 5}, {"name": "Nein! Doch! Oh!", "yt": "w4aLThuU008", "start": 0, "levels": [5], "limit": 5}, {"name": "Was machen Sachen", "yt": "afhOpXMllH0", "start": 0, "levels": [5], "limit": 5}, {"name": "Wer ist Shakespeare?", "yt": "ByFe08jg8eE", "start": 0, "levels": [5], "limit": 5}];
+const KEY = "hoerdle-meme-pruefer";
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch {}
+const $ = (id) => document.getElementById(id);
+const startOf = (m) => (saved[m.yt] ?? m.start);
+let cur = MEMES[0], player = null, ready = false, timer = 0, raf = 0, t0 = 0, want = false;
+
+MEMES.forEach((m, i) => { const o = document.createElement("option"); o.value = i; $("sel").appendChild(o); });
+function labels() { MEMES.forEach((m, i) => { $("sel").children[i].textContent = (saved[m.yt] !== undefined ? "✎ " : "") + m.name + " (Stufe " + m.levels.join("/") + ")"; }); }
+[1, 2, 3, 5, 8, 12, 16].forEach((s) => { const o = document.createElement("option"); o.value = s; o.textContent = s + " Sekunden"; $("len").appendChild(o); });
+
+function show() {
+  $("startShow").textContent = startOf(cur).toFixed(1) + " s";
+  $("startIn").value = startOf(cur);
+  $("info").innerHTML = "In Stufe " + cur.levels.join(", ") + " hört man höchstens <b>" + cur.limit + " Sekunden</b>. Der wichtige Teil muss also in den ersten " + cur.limit + " Sekunden nach der Startsekunde liegen.";
+  $("len").value = String([1,2,3,5,8,12,16].reduce((a, b) => (Math.abs(b - cur.limit) < Math.abs(a - cur.limit) ? b : a)));
+  out(); labels(); $("sel").value = MEMES.indexOf(cur);
+}
+function setStart(v) {
+  v = Math.max(0, Math.round(v * 10) / 10);
+  if (v === cur.start) delete saved[cur.yt]; else saved[cur.yt] = v;
+  try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch {}
+  show();
+}
+function out() {
+  const rows = MEMES.filter((m) => saved[m.yt] !== undefined).map((m) => m.name + " | " + m.yt + " | start " + saved[m.yt]);
+  $("out").textContent = rows.length ? rows.join("\n") : "Noch nichts geändert.";
+}
+function halt() { want = false; clearTimeout(timer); cancelAnimationFrame(raf); try { player && player.pauseVideo(); } catch {} $("bar").style.width = "0"; }
+function begin(limitMs) {
+  if (!ready) { $("msg").textContent = "Der Player lädt noch (oder YouTube ist nicht erreichbar). Warte einen Moment und versuch es noch einmal."; return; }
+  halt(); want = true; wantLimit = limitMs; $("msg").textContent = "Status: startet …";
+  clearTimeout(giveUp); giveUp = setTimeout(() => { if (want && $("msg").textContent.indexOf("spielt") < 0) $("msg").textContent = "Es kommt kein Ton. Prüfe, ob dein iPad nicht stumm geschaltet ist (Lautstärke, Stumm-Schalter) und tippe noch einmal auf Anhören."; }, 4000);
+  player.loadVideoById({ videoId: cur.yt, startSeconds: startOf(cur) });
+  player.unMute(); player.setVolume(100);
+}
+let wantLimit = 0, giveUp = 0;
+const NAMES = { "-1": "nicht gestartet", 0: "zu Ende", 1: "spielt", 2: "pausiert", 3: "lädt …", 5: "bereit" };
+function onState(e) {
+  if (want) $("msg").textContent = "Status: " + (NAMES[e.data] ?? e.data);
+  if (e.data !== 1 || !want) return;
+  t0 = performance.now(); clearTimeout(timer);
+  if (wantLimit) timer = setTimeout(halt, wantLimit);
+  const tick = () => { if (!want) return; const f = wantLimit ? Math.min((performance.now() - t0) / wantLimit, 1) : 0; $("bar").style.width = (f * 100) + "%"; raf = requestAnimationFrame(tick); };
+  tick();
+}
+$("play").onclick = () => begin(Number($("len").value) * 1000);
+$("freeplay").onclick = () => begin(0);
+$("stop").onclick = halt;
+$("mark").onclick = () => { try { const t = player.getCurrentTime(); setStart(t); $("msg").innerHTML = '<span class="hint">Start gesetzt auf ' + (Math.round(t * 10) / 10) + ' s.</span>'; } catch {} };
+document.querySelectorAll("[data-d]").forEach((b) => b.onclick = () => setStart(startOf(cur) + Number(b.dataset.d)));
+$("startIn").onchange = () => setStart(Number($("startIn").value) || 0);
+$("sel").onchange = () => { halt(); cur = MEMES[Number($("sel").value)]; show(); };
+$("copy").onclick = async () => { try { await navigator.clipboard.writeText($("out").textContent); $("copy").textContent = "Kopiert!"; setTimeout(() => $("copy").textContent = "Liste kopieren", 1500); } catch { $("msg").textContent = "Kopieren ging nicht. Markiere den Text in der Liste und kopiere ihn von Hand."; } };
+$("reset").onclick = () => { if (confirm("Alle Änderungen löschen?")) { saved = {}; try { localStorage.removeItem(KEY); } catch {} show(); } };
+
+window.onYouTubeIframeAPIReady = () => {
+  player = new YT.Player("yt", { height: "1", width: "1", playerVars: { controls: 0, playsinline: 1 }, events: {
+    onReady: () => { ready = true; }, onStateChange: onState,
+    onError: (e) => { $("msg").textContent = "Dieses Video lässt sich nicht abspielen (Fehler " + e.data + ")."; } } });
+};
+const sc = document.createElement("script"); sc.src = "https://www.youtube.com/iframe_api"; document.body.appendChild(sc);
+show();
+</script>
+</body>
+</html>
