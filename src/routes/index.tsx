@@ -1,6 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FxToggle } from "@/components/FxToggle";
 import { InstallHint } from "@/components/InstallHint";
+import { Logo } from "@/components/Logo";
+import { themeStyle, type ThemeKey } from "@/lib/game-theme";
+import { activeCount, dayKey, loadStreak } from "@/lib/streak";
 import { LIVE_DUELS_ENABLED } from "@/lib/features";
 import { useEffect, useState } from "react";
 import { shareMeta } from "@/lib/share-meta";
@@ -17,14 +20,17 @@ export const Route = createFileRoute("/")({
 });
 
 const GAMES = [
-  { to: "/memes" as const, emoji: "😂", title: "Memedle", text: "Erkenne deutsche Memes am Sound", storageKey: "memedle-seen" },
-  { to: "/stimmen" as const, emoji: "🎬", title: "Stimmdle", text: "Schauspieler-Stimmen erkennen", storageKey: "stimmdle-seen" },
+  { to: "/memes" as const, emoji: "😂", title: "Memedle", text: "Erkenne deutsche Memes am Sound", storageKey: "memedle-seen", theme: "memes" as ThemeKey },
+  { to: "/stimmen" as const, emoji: "🎬", title: "Stimmdle", text: "Schauspieler-Stimmen erkennen", storageKey: "stimmdle-seen", theme: "stimmen" as ThemeKey },
 ];
 
 function Menu() {
   // Rekorde liegen im Browser; erst nach dem Laden lesen, damit Server und Browser dasselbe zeigen.
   const [records, setRecords] = useState<Record<string, { best: number; played: number }>>({});
+  const [streak, setStreak] = useState<{ count: number; best: number; today: boolean } | null>(null);
   useEffect(() => {
+    const s = loadStreak(), today = dayKey();
+    setStreak({ count: activeCount(s, today), best: s?.best ?? 0, today: s?.last === today });
     setRecords(Object.fromEntries(GAMES.map((g) => {
       const s = summarize(loadRounds(statsKey(g.storageKey)));
       return [g.storageKey, { best: s.best, played: s.played }];
@@ -33,12 +39,23 @@ function Menu() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10">
-      <h1 className="text-center text-4xl font-extrabold tracking-tight">Hör<span className="text-primary">dle</span></h1>
+      <Logo />
       <p className="mt-2 text-center text-sm text-muted-foreground">Wähle dein Spiel</p>
+      {streak && streak.count > 0 && (
+        <div className="mt-4 text-center">
+          <span className="inline-block rounded-full border border-accent/40 bg-accent/10 px-4 py-1.5 text-sm font-bold text-accent">
+            🔥 {streak.count} {streak.count === 1 ? "Tag" : "Tage"} in Folge
+          </span>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {streak.today ? "Heute schon gespielt ✓" : "Spiel heute eine Runde, damit die Serie bleibt"}
+            {streak.best > streak.count ? ` · Rekord ${streak.best} Tage` : ""}
+          </p>
+        </div>
+      )}
       <div className="mt-8 space-y-4">
         {GAMES.map((g) => (
-          <Link key={g.to} to={g.to} className="flex items-center gap-4 rounded-2xl border-2 border-border bg-card p-5 transition hover:border-primary active:scale-[0.98]">
-            <span className="text-4xl">{g.emoji}</span>
+          <Link key={g.to} to={g.to} style={themeStyle(g.theme)} className="flex items-center gap-4 rounded-2xl border-2 border-border bg-card p-5 transition hover:border-primary active:scale-[0.98]">
+            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-primary/15 text-3xl">{g.emoji}</span>
             <span>
               <span className="block text-xl font-extrabold">{g.title}</span>
               <span className="block text-sm text-muted-foreground">{g.text}</span>
@@ -50,8 +67,8 @@ function Menu() {
             </span>
           </Link>
         ))}
-        <Link to="/blitz" className="flex items-center gap-4 rounded-2xl border-2 border-primary/50 bg-primary/5 p-5 transition hover:border-primary active:scale-[0.98]">
-          <span className="text-4xl">⚡</span>
+        <Link to="/blitz" style={themeStyle("blitz")} className="flex items-center gap-4 rounded-2xl border-2 border-primary/50 bg-primary/5 p-5 transition hover:border-primary active:scale-[0.98]">
+          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-primary/15 text-3xl">⚡</span>
           <span>
             <span className="block text-xl font-extrabold">Blitz-Modus</span>
             <span className="block text-sm text-muted-foreground">60 Sekunden, so viele wie möglich – mit Serien-Bonus</span>
